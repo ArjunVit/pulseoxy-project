@@ -5,7 +5,7 @@
 #include "MAX30100_PulseOximeter.h"
 // #define BLYNK_PRINT Serial
 // #include <Blynk.h>
-#include <WiFi.h>
+// #include <WiFi.h>
 // #include <BlynkSimpleEsp32.h>
 
 #define REPORTING_PERIOD_MS 1000
@@ -26,7 +26,7 @@ void onBeatDetected() {
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // pinMode(19, OUTPUT);
   // Blynk.begin(auth, ssid, pass);
@@ -38,11 +38,11 @@ void setup() {
       ;
   } else {
     Serial.println("SUCCESS");
-    //  pox.setOnBeatDetectedCallback(onBeatDetected);
+    pox.setOnBeatDetectedCallback(onBeatDetected);
   }
 
   // The default current for the IR LED is 50mA and it could be changed by uncommenting the following line.
-  // pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
+  pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
 }
 
 void loop() {
