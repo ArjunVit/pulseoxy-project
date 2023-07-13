@@ -5,22 +5,10 @@
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 
-// MAX30100
-#include "MAX30100_PulseOximeter.h"
-
-// #include <WiFi.h>
-
 // MPU6050
 Adafruit_MPU6050 mpu;
 const int MPU_ADDR = 0x68; // I2C address of the MPU-6050
 float AcX, AcY, AcZ, GyX, GyY, GyZ;
-
-// MAX30100
-#define REPORTING_PERIOD_MS 1000
-PulseOximeter pox;
-float BPM, SpO2;
-uint32_t tsLastReport = 0;
-
 
 void setup() {
   Serial.begin(115200);
@@ -29,47 +17,30 @@ void setup() {
 
   // Starting the MPU6050
   Serial.println("Initializing MPU6050 sensor");
-  // mpu.begin(MPU_ADDR);
+  bool sta;
   Wire.begin();
   Wire.beginTransmission(MPU_ADDR);
   Wire.write(0x6B);  // PWR_MGMT_1 register
   Wire.write(0);     // set to zero (wakes up the MPU-6050)
   Wire.endTransmission(true);
-  mpu.begin();
+  i2cmpu.begin(i2c_sda, i2c_scl, 100000);
+  sta = mpu.begin(MPU_ADDR, &i2cmpu);
+  if(!sta) {
+    Serial.println("Not found");
+    while(1);
+  }
+  // mpu.begin();
   // if(!mpu.begin()) {
   //   Serial.println("MPU6050 Not found");
-  //   while(!mpu.begin(MPU_ADDR)) {
-  //     mpu.begin(MPU_ADDR);
+  //   while(!mpu.begin()) {
+  //     mpu.begin();
   //   }
   // }
 
-  // Starting the MAX30100
-  Serial.print("Initializing Pulse Oximeter sensor");
-  if (!pox.begin()) {
-    Serial.println("FAILED");
-    while(1) {
-      delay(10);
-    }
-  }
-  Serial.println("SUCCESS");
   delay(100);
 }
 
 void loop() {
-  // MAX30100
-  pox.update();
-  BPM = pox.getHeartRate();
-  SpO2 = pox.getSpO2();
-  if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-    Serial.print("Heart rate:");
-    Serial.print(BPM);
-    Serial.print(" bpm / SpO2:");
-    Serial.print(SpO2);
-    Serial.println(" %");
-    tsLastReport = millis();
-  }
-  delay(500);
-
   // MPU6050
   /* Get new sensor events with the readings */
   sensors_event_t a, g, temp;
