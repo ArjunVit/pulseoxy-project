@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'bootstrap.min.css' %}" />
+        <link rel="stylesheet" href="{% static 'font-awesome.css' %}" />
+        <script src="{% static 'bootstrap.min.js' %}"></script>
+    </head>
+    <body>
+        <div class="container">
+            <center><h1>Live Graph</h1></center>
+            <div class="row">
+                <div
+                    id="chartContainer"
+                    class="lg-12"
+                ></div>
+            </div>
+        </div>
+    </body>
+
+    <script src="{% static 'jquery-3.3.1.min.js' %}"></script>
+    <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+
+    <script>
+        com = "";
+        fill_graph_sensor();
+        // $("#btn_show").click(function () {
+        // window.onload(function() {
+        // })
+        // });
+
+        function fill_graph_sensor() {
+            var dps1 = []; // dataPoints Heart rate
+            var dps2 = []; // dataPoints Oxygen Level
+            var chart = new CanvasJS.Chart("chartContainer", {
+                animationEnabled: true,
+                title: {
+                    text: "Live Data from ESP32 connected with sensor",
+                },
+                axisX: {
+                    title: "Time",
+                },
+                axisY: {
+                    title: "Heart Rate and Oxygen Level",
+                    suffix: "",
+                },
+                data: [
+                    {
+                        type: "line",
+                        name: "Heart Rate",
+                        connectNullData: true,
+                        //nullDataLineDashType: "solid",
+                        xValueType: "dateTime",
+                        xValueFormatString: "DD MMM hh:mm TT",
+                        yValueFormatString: '#,##.##"bpm"',
+                        dataPoints: dps1,
+                    },
+                    {
+                        type: "line",
+                        name: "Oxygen Level",
+                        connectNullData: true,
+                        //nullDataLineDashType: "solid",
+                        xValueType: "dateTime",
+                        xValueFormatString: "DD MMM hh: mm TT",
+                        yValueFormatString: '#,##.##"SpO2"',
+                        dataPoints: dps2,
+                    },
+                ],
+            });
+
+            var xVal = 0;
+            var yVal = 100;
+            var updateInterval = 1000; //miliseconds
+            var dataLength = 30; // number of dataPoints visible at any point
+
+            var updateChart = function () {
+                $.ajax({
+                    type: "get",
+                    url: "{% url 'Student:fetch_sensor_values_ajax' %}",
+                    data: {
+                        id: com,
+                    },
+                    success: function (data) {
+                        console.log(data.result);
+                        for (index = 0; index < data.result.length; index++) {
+                            var str_array = data.result[index].split(",");
+                            dps1.push({
+                                x: Date.parse(str_array[2]),
+                                y: Number(str_array[0]),
+                            });
+                            dps2.push({
+                                x: Date.parse(str_array[2]),
+                                y: Number(str_array[1]),
+                            });
+                        }
+                        return data;
+                    },
+                    error: function () {
+                        console.log("error he ji");
+                    },
+                });
+                if (dps1.length > dataLength) {
+                    dps1.shift();
+                }
+                if (dps2.length > dataLength) {
+                    dps2.shift();
+                }
+                chart.render();
+            };
+            updateChart(dataLength);
+            setInterval(function () {
+                updateChart();
+            }, updateInterval);
+        }
+    </script>
+</html>
